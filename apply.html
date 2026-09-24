@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Join Tinker Toddler</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#22314F; --paper:#FFFFFF; --sky:#DCEEFA; --sun:#FFCF5A; --leaf:#2F8F62;
+  --line:#D5DEE8; --muted:#5C6B84; --err:#C2413A; --soft:#F5F9FC;
+  --cjk:"PingFang TC","Noto Sans TC","Microsoft JhengHei","Heiti TC",sans-serif;
+  --display:"Baloo 2",var(--cjk);
+  --body:"Nunito Sans",var(--cjk);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--soft);color:var(--ink);font:16px/1.55 var(--body);
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.wrap{max-width:540px;margin:0 auto;padding:20px 20px 120px}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.brand{font:700 18px/1 var(--display);letter-spacing:.2px}
+.lang{display:flex;background:var(--paper);border:1.5px solid var(--line);border-radius:999px;padding:3px}
+.lang button{border:0;background:none;font:600 13px var(--body);color:var(--muted);padding:6px 11px;border-radius:999px;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--ink);color:#fff}
+
+h1{font:700 clamp(30px,8vw,38px)/1.1 var(--display);margin:28px 0 8px}
+.intro{color:var(--muted);margin:0 0 22px;max-width:44ch}
+
+/* footprint trail */
+.trail{display:flex;align-items:flex-end;gap:6px;height:54px;margin:4px 0 6px}
+.trail svg{width:20px;height:30px;fill:var(--line);transition:fill .2s}
+.trail svg:nth-child(odd){transform:translateY(-14px) rotate(-8deg)}
+.trail svg:nth-child(even){transform:scaleX(-1) rotate(-8deg)}
+.trail svg.done{fill:var(--ink)}
+.trail svg.now{fill:var(--sun);stroke:var(--ink);stroke-width:1.5}
+.trail svg.stamp{animation:stamp .35s ease-out}
+@keyframes stamp{0%{scale:1.5}100%{scale:1}}
+.steplabel{font:600 13px var(--body);color:var(--muted);margin-bottom:18px}
+
+.card{background:var(--paper);border-radius:18px;padding:22px 20px;border:1.5px solid var(--line)}
+h2{font:700 24px/1.2 var(--display);margin:0 0 16px}
+
+.field{margin-bottom:18px}
+.field > label, .field > .lbl{display:block;font-weight:700;font-size:15px;margin-bottom:6px}
+.req::after{content:" *";color:var(--err)}
+input[type=text],input[type=tel],input[type=email],input[type=number],input[type=date],select,textarea{
+  width:100%;font:16px var(--body);color:var(--ink);background:var(--paper);
+  border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;appearance:none}
+textarea{min-height:88px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--ink);box-shadow:0 0 0 3px var(--sky)}
+.hint{font-size:13px;color:var(--muted);margin-top:5px}
+.error{font-size:13px;color:var(--err);margin-top:5px;font-weight:600}
+.invalid input,.invalid select,.invalid textarea,.invalid .chips{border-color:var(--err)}
+
+.chips{display:flex;flex-wrap:wrap;gap:8px;border:1.5px solid transparent;border-radius:12px}
+.chips label{display:inline-flex;align-items:center;gap:8px;border:1.5px solid var(--line);border-radius:999px;
+  padding:9px 14px;cursor:pointer;font-weight:600;font-size:15px;background:var(--paper)}
+.chips input{accent-color:var(--ink);width:17px;height:17px;margin:0}
+.chips label:has(input:checked){border-color:var(--ink);background:var(--sky)}
+
+.toggle{display:flex;gap:12px;align-items:center;padding:14px;border-radius:12px;background:var(--sky);font-weight:700;cursor:pointer;margin-bottom:18px}
+.toggle input{width:20px;height:20px;accent-color:var(--ink);margin:0}
+
+/* jobs */
+.jobs{display:grid;gap:10px}
+.job{display:block;text-align:left;width:100%;border:1.5px solid var(--line);background:var(--paper);border-radius:14px;
+  padding:16px;cursor:pointer;font:inherit;color:inherit}
+.job[aria-pressed="true"]{border-color:var(--ink);background:var(--sky);box-shadow:inset 4px 0 0 var(--ink)}
+.job strong{display:block;font:700 18px/1.25 var(--display)}
+.job .loc{font-size:14px;color:var(--muted);font-weight:600}
+.job p{margin:6px 0 0;font-size:14px}
+
+/* photo + docs */
+.selfie{display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center}
+.face{width:190px;height:190px;border-radius:50%;background:var(--sky);border:3px dashed var(--line);
+  display:grid;place-items:center;overflow:hidden}
+.face img{width:100%;height:100%;object-fit:cover}
+.face svg{width:70px;opacity:.5}
+.docs{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.doc{position:relative;border:1.5px dashed var(--line);border-radius:14px;min-height:130px;padding:12px;
+  display:flex;flex-direction:column;justify-content:flex-end;gap:4px;cursor:pointer;background:var(--soft);overflow:hidden}
+.doc.wide{grid-column:1/-1}
+.doc.has{border-style:solid;border-color:var(--leaf);background:var(--paper)}
+.doc img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.35}
+.doc .t{position:relative;font-weight:700;font-size:15px}
+.doc .s{position:relative;font-size:13px;color:var(--muted);word-break:break-all}
+.doc.has .s{color:var(--leaf);font-weight:700}
+.doc input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.doc.invalid{border-color:var(--err)}
+.doc.off{opacity:.45;pointer-events:none}
+
+/* review */
+dl.review{margin:0 0 18px;display:grid;grid-template-columns:auto 1fr;gap:8px 14px;font-size:15px}
+dl.review dt{color:var(--muted)}
+dl.review dd{margin:0;font-weight:600;word-break:break-word}
+.consent{font-size:14px;line-height:1.5}
+
+/* nav */
+.nav{position:fixed;left:0;right:0;bottom:0;background:var(--paper);border-top:1.5px solid var(--line);
+  padding:12px 20px calc(12px + env(safe-area-inset-bottom,0px))}
+.nav .in{max-width:540px;margin:0 auto;display:flex;gap:10px}
+.btn{font:700 17px var(--body);border-radius:14px;padding:14px 18px;border:0;cursor:pointer}
+.btn.primary{flex:1;background:var(--sun);color:var(--ink)}
+.btn.ghost{background:none;color:var(--ink);border:1.5px solid var(--line)}
+.btn.small{font-size:15px;padding:10px 16px}
+.btn:disabled{opacity:.5;cursor:default}
+.btn:focus-visible,.job:focus-visible,.lang button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+
+.overlay{position:fixed;inset:0;background:rgba(34,49,79,.55);display:none;place-items:center;z-index:9;padding:20px}
+.overlay.on{display:grid}
+.overlay .box{background:var(--paper);border-radius:18px;padding:26px;text-align:center;max-width:320px;font-weight:700}
+.spin{width:38px;height:38px;border:4px solid var(--sky);border-top-color:var(--ink);border-radius:50%;margin:0 auto 14px;animation:sp 1s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.done{text-align:center;padding:40px 10px}
+.done h2{font-size:30px}
+.ref{display:inline-block;font:700 22px var(--display);background:var(--sky);padding:8px 18px;border-radius:12px;margin:8px 0 16px}
+.hp{position:absolute;left:-9999px}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">Tinker Toddler</div>
+    <div class="lang" role="group" aria-label="Language">
+      <button data-lang="zh">中文</button><button data-lang="en">EN</button><button data-lang="ms">BM</button>
+    </div>
+  </header>
+
+  <div id="app">
+    <h1 id="title"></h1>
+    <p class="intro" id="intro"></p>
+    <div class="trail" id="trail" aria-hidden="true"></div>
+    <div class="steplabel" id="steplabel"></div>
+    <div class="card" id="card"></div>
+  </div>
+  <div id="doneView" class="done" hidden></div>
+</div>
+
+<nav class="nav" id="nav">
+  <div class="in">
+    <button class="btn ghost" id="backBtn"></button>
+    <button class="btn primary" id="nextBtn"></button>
+  </div>
+</nav>
+
+<div class="overlay" id="overlay"><div class="box"><div class="spin"></div><div id="overlayText"></div></div></div>
+
+<script>
+/* ============ 設定：換成你的 Apps Script 網址 ============ */
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzUnLRhyMmZA11bBvI1WP9gfNOky1mtuFMMHiGQzZ8l8yMUrKY0b1-En2PpPXR8D2KI/exec';
+
+const T = {
+  title:{zh:'加入 Tinker Toddler 團隊',en:'Join the Tinker Toddler team',ms:'Sertai pasukan Tinker Toddler'},
+  intro:{zh:'大約 5 分鐘。請先準備好你的 IC、履歷和上一份工作的薪資單。',en:'Takes about 5 minutes. Have your IC, resume and last payslip ready.',ms:'Kira-kira 5 minit. Sediakan IC, resume dan slip gaji terakhir anda.'},
+  steps:{zh:['選擇職位','個人資料','工作經驗','自拍照','上傳文件','確認並提交'],
+         en:['Choose a position','About you','Work experience','Selfie','Documents','Review and submit'],
+         ms:['Pilih jawatan','Maklumat diri','Pengalaman kerja','Swafoto','Dokumen','Semak dan hantar']},
+  stepOf:{zh:(a,b)=>`第 ${a} 步，共 ${b} 步`,en:(a,b)=>`Step ${a} of ${b}`,ms:(a,b)=>`Langkah ${a} daripada ${b}`},
+  next:{zh:'下一步',en:'Next',ms:'Seterusnya'},
+  back:{zh:'上一步',en:'Back',ms:'Kembali'},
+  submit:{zh:'提交申請',en:'Submit application',ms:'Hantar permohonan'},
+  loadingJobs:{zh:'正在載入職位…',en:'Loading positions…',ms:'Memuatkan jawatan…'},
+  noJobs:{zh:'目前沒有開放的職位。',en:'There are no open positions right now.',ms:'Tiada jawatan kosong buat masa ini.'},
+  jobsError:{zh:'無法載入職位，請檢查網絡後重新整理頁面。',en:'Could not load positions. Check your connection and refresh the page.',ms:'Gagal memuatkan jawatan. Semak sambungan dan muat semula halaman.'},
+  pickJob:{zh:'請選擇一個職位',en:'Choose a position to continue',ms:'Pilih satu jawatan untuk teruskan'},
+
+  name:{zh:'全名（依照 IC）',en:'Full name (as per IC)',ms:'Nama penuh (seperti dalam IC)'},
+  ic:{zh:'IC 號碼',en:'IC number',ms:'Nombor IC'},
+  icHint:{zh:'例如 990101-10-1234',en:'e.g. 990101-10-1234',ms:'cth. 990101-10-1234'},
+  phone:{zh:'手機號碼（WhatsApp）',en:'Mobile number (WhatsApp)',ms:'Nombor telefon (WhatsApp)'},
+  email:{zh:'電郵（可選）',en:'Email (optional)',ms:'E-mel (pilihan)'},
+  gender:{zh:'性別',en:'Gender',ms:'Jantina'},
+  male:{zh:'男',en:'Male',ms:'Lelaki'}, female:{zh:'女',en:'Female',ms:'Perempuan'},
+  area:{zh:'居住地區',en:'Area you live in',ms:'Kawasan tempat tinggal'},
+  areaHint:{zh:'例如 Puchong、Cheras',en:'e.g. Puchong, Cheras',ms:'cth. Puchong, Cheras'},
+  address:{zh:'地址（可選）',en:'Address (optional)',ms:'Alamat (pilihan)'},
+  languages:{zh:'會說的語言',en:'Languages you speak',ms:'Bahasa yang dituturkan'},
+  lzh:{zh:'中文',en:'Chinese',ms:'Cina'}, len:{zh:'English',en:'English',ms:'Inggeris'},
+  lms:{zh:'Bahasa Melayu',en:'Malay',ms:'Melayu'}, lot:{zh:'其他',en:'Other',ms:'Lain-lain'},
+  transport:{zh:'交通方式',en:'How you get to work',ms:'Pengangkutan ke tempat kerja'},
+  car:{zh:'自己有車',en:'Own car',ms:'Kereta sendiri'}, motor:{zh:'電單車',en:'Motorcycle',ms:'Motosikal'},
+  public:{zh:'大眾交通',en:'Public transport',ms:'Pengangkutan awam'},
+  expectedSalary:{zh:'期望薪資（RM / 月）',en:'Expected salary (RM / month)',ms:'Gaji dijangka (RM / bulan)'},
+  startDate:{zh:'最快可上班日期',en:'Earliest start date',ms:'Tarikh mula paling awal'},
+  source:{zh:'從哪裡得知這個職位？',en:'Where did you hear about this job?',ms:'Di mana anda tahu tentang jawatan ini?'},
+  choose:{zh:'請選擇',en:'Choose one',ms:'Pilih satu'},
+  poster:{zh:'商場海報',en:'Poster at a store',ms:'Poster di kedai'}, social:{zh:'社交媒體',en:'Social media',ms:'Media sosial'},
+  friend:{zh:'朋友介紹',en:'A friend',ms:'Kawan'}, other:{zh:'其他',en:'Other',ms:'Lain-lain'},
+
+  noPrevJob:{zh:'這是我的第一份工作',en:'This will be my first job',ms:'Ini kerja pertama saya'},
+  prevCompany:{zh:'上一份工作的公司',en:'Last company',ms:'Syarikat terakhir'},
+  prevPosition:{zh:'職位',en:'Position',ms:'Jawatan'},
+  prevDuration:{zh:'工作期間',en:'Period worked',ms:'Tempoh bekerja'},
+  prevDurationHint:{zh:'例如 2023年3月 至 2025年6月',en:'e.g. Mar 2023 to Jun 2025',ms:'cth. Mac 2023 hingga Jun 2025'},
+  leaveReason:{zh:'離職原因（可選）',en:'Reason for leaving (optional)',ms:'Sebab berhenti (pilihan)'},
+  experience:{zh:'零售、銷售或照顧小孩的經驗（可選）',en:'Retail, sales or childcare experience (optional)',ms:'Pengalaman runcit, jualan atau penjagaan kanak-kanak (pilihan)'},
+
+  selfieHelp:{zh:'請拍一張清楚的正面照，不要戴口罩或墨鏡。',en:'Take a clear photo of your face. No mask or sunglasses.',ms:'Ambil gambar wajah yang jelas. Tanpa pelitup muka atau cermin mata hitam.'},
+  openCamera:{zh:'打開相機',en:'Open camera',ms:'Buka kamera'},
+  retake:{zh:'重拍',en:'Retake',ms:'Ambil semula'},
+  needSelfie:{zh:'請拍一張自拍照',en:'Take a selfie to continue',ms:'Ambil swafoto untuk teruskan'},
+
+  icFront:{zh:'IC 正面',en:'IC front',ms:'IC depan'}, icBack:{zh:'IC 背面',en:'IC back',ms:'IC belakang'},
+  resume:{zh:'履歷（PDF 或照片）',en:'Resume (PDF or photo)',ms:'Resume (PDF atau gambar)'},
+  payslip:{zh:'上一份工作的薪資單',en:'Payslip from your last job',ms:'Slip gaji kerja terakhir'},
+  payslipOff:{zh:'第一份工作，不需要',en:'Not needed for first job',ms:'Tidak perlu untuk kerja pertama'},
+  tapUpload:{zh:'點擊上傳',en:'Tap to upload',ms:'Ketik untuk muat naik'},
+  uploaded:{zh:'已上傳，點擊更換',en:'Added. Tap to change',ms:'Ditambah. Ketik untuk tukar'},
+  docsHint:{zh:'確保照片清楚、四角完整、沒有反光。',en:'Make sure photos are sharp, show all four corners and have no glare.',ms:'Pastikan gambar jelas, nampak keempat-empat penjuru dan tiada silau.'},
+  needFile:{zh:'請上傳這份文件',en:'Upload this document',ms:'Muat naik dokumen ini'},
+
+  position:{zh:'職位',en:'Position',ms:'Jawatan'},
+  files:{zh:'文件',en:'Documents',ms:'Dokumen'},
+  filesCount:{zh:n=>`已上傳 ${n} 份`,en:n=>`${n} added`,ms:n=>`${n} dimuat naik`},
+  consent:{zh:'我同意 Tinker Toddler Sdn. Bhd. 收集和使用以上個人資料及文件，僅用於這次招聘評估，不會提供給第三方。我確認所填資料屬實。',
+           en:'I agree that Tinker Toddler Sdn. Bhd. may collect and use the information and documents above only to assess this job application, and will not share them with third parties. I confirm the information is true.',
+           ms:'Saya bersetuju Tinker Toddler Sdn. Bhd. mengumpul dan menggunakan maklumat serta dokumen di atas hanya untuk menilai permohonan ini, dan tidak akan dikongsi dengan pihak ketiga. Saya mengesahkan maklumat ini benar.'},
+  needConsent:{zh:'請勾選同意才能提交',en:'Tick the box to submit',ms:'Tandakan kotak untuk menghantar'},
+
+  required:{zh:'請填寫此欄',en:'This field is required',ms:'Ruangan ini wajib diisi'},
+  badIc:{zh:'請輸入 12 位數 IC 號碼',en:'Enter a 12-digit IC number',ms:'Masukkan nombor IC 12 digit'},
+  badPhone:{zh:'請輸入正確的手機號碼',en:'Enter a valid mobile number',ms:'Masukkan nombor telefon yang sah'},
+  badEmail:{zh:'電郵格式不正確',en:'Enter a valid email',ms:'Masukkan e-mel yang sah'},
+  tooBig:{zh:'檔案太大（PDF 最多 8MB）',en:'File too large (PDF max 8MB)',ms:'Fail terlalu besar (PDF maks 8MB)'},
+  badType:{zh:'只接受照片或 PDF',en:'Only photos or PDF files',ms:'Hanya gambar atau PDF'},
+  readFail:{zh:'無法讀取這張照片，請改用相機拍攝',en:'Could not read this photo. Try taking it with the camera',ms:'Gagal membaca gambar ini. Cuba ambil dengan kamera'},
+
+  uploading:{zh:'正在上傳，請不要關閉頁面…',en:'Uploading. Keep this page open…',ms:'Sedang memuat naik. Jangan tutup halaman ini…'},
+  submitFail:{zh:'提交失敗：',en:'Could not submit: ',ms:'Gagal dihantar: '},
+  tryAgain:{zh:'請檢查網絡後再按一次「提交申請」。',en:'Check your connection and tap Submit application again.',ms:'Semak sambungan dan ketik Hantar permohonan sekali lagi.'},
+  doneTitle:{zh:'已收到你的申請',en:'Application received',ms:'Permohonan diterima'},
+  doneRef:{zh:'申請編號',en:'Reference number',ms:'Nombor rujukan'},
+  doneText:{zh:'我們審核後會透過 WhatsApp 聯絡你。請截圖保存申請編號。',en:"We'll contact you on WhatsApp after reviewing. Screenshot your reference number.",ms:'Kami akan hubungi anda melalui WhatsApp selepas semakan. Tangkap layar nombor rujukan anda.'}
+};
+
+const FOOT = '<svg viewBox="0 0 24 36"><path d="M12 1.5c5.2 0 8.4 5 8.4 11.8 0 4.7-1.8 7.6-1.8 11.3 0 5.4-2.8 9.9-6.8 9.9s-6.4-3.6-6.4-8c0-3.8 1.1-6.6.3-10.7C4.6 8.6 6.8 1.5 12 1.5z"/></svg>';
+const PERSON = '<svg viewBox="0 0 24 24" fill="#22314F"><circle cx="12" cy="8" r="4.5"/><path d="M3 22c0-5 4-8 9-8s9 3 9 8z"/></svg>';
+
+const FIELDS = {
+  1: [
+    {k:'name',req:1,ac:'name'},
+    {k:'ic',req:1,inputmode:'numeric',hint:'icHint',check:'ic'},
+    {k:'phone',type:'tel',req:1,ac:'tel',check:'phone'},
+    {k:'email',type:'email',ac:'email',check:'email'},
+    {k:'gender',type:'radio',opts:['male','female'],req:1},
+    {k:'area',req:1,hint:'areaHint'},
+    {k:'address',type:'textarea',ac:'street-address'},
+    {k:'languages',type:'check',opts:['lzh','len','lms','lot'],req:1},
+    {k:'transport',type:'radio',opts:['car','motor','public'],req:1},
+    {k:'expectedSalary',type:'number',req:1,inputmode:'numeric'},
+    {k:'startDate',type:'date',req:1},
+    {k:'source',type:'select',opts:['poster','social','friend','other']}
+  ],
+  2: [
+    {k:'prevCompany',req:'job'},
+    {k:'prevPosition',req:'job'},
+    {k:'prevDuration',req:'job',hint:'prevDurationHint'},
+    {k:'leaveReason',type:'textarea',jobOnly:1},
+    {k:'experience',type:'textarea'}
+  ]
+};
+const DOCS = [
+  {k:'icFront',accept:'image/*'},
+  {k:'icBack',accept:'image/*'},
+  {k:'resume',accept:'image/*,application/pdf',wide:1},
+  {k:'payslip',accept:'image/*,application/pdf',wide:1}
+];
+
+const S = { lang:'zh', step:0, jobs:null, jobsErr:false, data:{}, files:{}, errors:{}, consent:false };
+const $ = id => document.getElementById(id);
+const t = k => (T[k] ? T[k][S.lang] : k);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ---------- language ---------- */
+function initLang(){
+  let saved = null; try { saved = localStorage.getItem('tt-lang'); } catch(e){}
+  const nav = (navigator.language || '').toLowerCase();
+  S.lang = saved || (nav.startsWith('zh') ? 'zh' : nav.startsWith('ms') ? 'ms' : 'en');
+  document.querySelectorAll('.lang button').forEach(b => b.onclick = () => {
+    S.lang = b.dataset.lang; try { localStorage.setItem('tt-lang', S.lang); } catch(e){}
+    render();
+  });
+}
+
+/* ---------- render ---------- */
+function render(stampIdx){
+  document.documentElement.lang = {zh:'zh-Hant',en:'en',ms:'ms'}[S.lang];
+  document.querySelectorAll('.lang button').forEach(b => b.setAttribute('aria-pressed', b.dataset.lang === S.lang));
+  $('title').textContent = t('title');
+  $('intro').textContent = t('intro');
+  const names = t('steps');
+  $('trail').innerHTML = names.map((_, i) =>
+    FOOT.replace('<svg', `<svg class="${i < S.step ? 'done' : i === S.step ? 'now' : ''}${i === stampIdx ? ' stamp' : ''}"`)).join('');
+  $('steplabel').textContent = T.stepOf[S.lang](S.step + 1, names.length);
+  $('backBtn').textContent = t('back');
+  $('backBtn').hidden = S.step === 0;
+  $('nextBtn').textContent = S.step === 5 ? t('submit') : t('next');
+  $('card').innerHTML = `<h2>${esc(names[S.step])}</h2>` + [stepJob, stepFields, stepFields, stepSelfie, stepDocs, stepReview][S.step]();
+  bind();
+}
+
+function stepJob(){
+  if (S.jobsErr) return `<p class="error">${t('jobsError')}</p>`;
+  if (!S.jobs) return `<p class="hint">${t('loadingJobs')}</p>`;
+  if (!S.jobs.length) return `<p>${t('noJobs')}</p>`;
+  const L = S.lang === 'zh' ? ['zh','descZh'] : S.lang === 'ms' ? ['ms','descMs'] : ['en','descEn'];
+  return `<div class="jobs">` + S.jobs.map(j => `
+    <button type="button" class="job" data-job="${esc(j.id)}" aria-pressed="${S.data.jobId === j.id}">
+      <strong>${esc(j[L[0]] || j.en || j.zh)}</strong>
+      ${j.location ? `<span class="loc">${esc(j.location)}</span>` : ''}
+      ${(j[L[1]] || j.descEn) ? `<p>${esc(j[L[1]] || j.descEn)}</p>` : ''}
+    </button>`).join('') + `</div>` + (S.errors.jobId ? `<p class="error">${t('pickJob')}</p>` : '');
+}
+
+function stepFields(){
+  const list = FIELDS[S.step];
+  let html = '';
+  if (S.step === 2) html += `<label class="toggle"><input type="checkbox" id="noPrevJob" ${S.data.noPrevJob ? 'checked' : ''}> ${t('noPrevJob')}</label>`;
+  list.forEach(f => {
+    if (S.step === 2 && S.data.noPrevJob && (f.req === 'job' || f.jobOnly)) return;
+    const req = f.req === 1 || (f.req === 'job' && !S.data.noPrevJob);
+    const v = S.data[f.k] ?? '';
+    const err = S.errors[f.k];
+    let ctrl;
+    if (f.type === 'radio' || f.type === 'check') {
+      const arr = f.type === 'check' ? (v || []) : [v];
+      ctrl = `<div class="chips">` + f.opts.map(o => `<label><input type="${f.type === 'check' ? 'checkbox' : 'radio'}" name="${f.k}" value="${o}" ${arr.includes(o) ? 'checked' : ''}> ${t(o)}</label>`).join('') + `</div>`;
+      html += `<div class="field ${err ? 'invalid' : ''}"><span class="lbl ${req ? 'req' : ''}">${t(f.k)}</span>${ctrl}`;
+    } else {
+      if (f.type === 'select') ctrl = `<select id="f_${f.k}" name="${f.k}"><option value="">${t('choose')}</option>` + f.opts.map(o => `<option value="${o}" ${v === o ? 'selected' : ''}>${t(o)}</option>`).join('') + `</select>`;
+      else if (f.type === 'textarea') ctrl = `<textarea id="f_${f.k}" name="${f.k}" ${f.ac ? `autocomplete="${f.ac}"` : ''}>${esc(v)}</textarea>`;
+      else ctrl = `<input id="f_${f.k}" name="${f.k}" type="${f.type || 'text'}" value="${esc(v)}" ${f.inputmode ? `inputmode="${f.inputmode}"` : ''} ${f.ac ? `autocomplete="${f.ac}"` : ''} ${f.type === 'number' ? 'min="0" step="50"' : ''}>`;
+      html += `<div class="field ${err ? 'invalid' : ''}"><label for="f_${f.k}" class="${req ? 'req' : ''}">${t(f.k)}</label>${ctrl}`;
+    }
+    if (f.hint && !err) html += `<div class="hint">${t(f.hint)}</div>`;
+    if (err) html += `<div class="error">${t(err)}</div>`;
+    html += `</div>`;
+  });
+  if (S.step === 1) html += `<input class="hp" tabindex="-1" autocomplete="off" name="website" aria-hidden="true">`;
+  return html;
+}
+
+function stepSelfie(){
+  const f = S.files.selfie;
+  return `<div class="selfie">
+    <div class="face">${f ? `<img src="${f.preview}" alt="">` : PERSON}</div>
+    <p class="hint" style="margin:0">${t('selfieHelp')}</p>
+    <label class="btn ${f ? 'ghost' : 'primary'} small" style="position:relative;flex:none">
+      ${f ? t('retake') : t('openCamera')}
+      <input type="file" accept="image/*" capture="user" data-file="selfie" style="position:absolute;inset:0;opacity:0">
+    </label>
+    ${S.errors.selfie ? `<p class="error">${t(S.errors.selfie)}</p>` : ''}
+  </div>`;
+}
+
+function stepDocs(){
+  return `<p class="hint" style="margin-top:-6px">${t('docsHint')}</p><div class="docs">` + DOCS.map(d => {
+    const f = S.files[d.k];
+    const off = d.k === 'payslip' && S.data.noPrevJob;
+    const err = S.errors[d.k];
+    return `<label class="doc ${d.wide ? 'wide' : ''} ${f ? 'has' : ''} ${err ? 'invalid' : ''} ${off ? 'off' : ''}">
+      ${f && f.preview ? `<img src="${f.preview}" alt="">` : ''}
+      <span class="t ${off ? '' : 'req'}">${t(d.k)}</span>
+      <span class="s">${off ? t('payslipOff') : err ? `<span style="color:var(--err)">${t(err)}</span>` : f ? (f.mime === 'application/pdf' ? esc(f.name) + ' · ' : '') + t('uploaded') : t('tapUpload')}</span>
+      ${off ? '' : `<input type="file" accept="${d.accept}" data-file="${d.k}">`}
+    </label>`;
+  }).join('') + `</div>`;
+}
+
+function stepReview(){
+  const job = (S.jobs || []).find(j => j.id === S.data.jobId) || {};
+  const jobName = job[S.lang] || job.en || job.zh || '';
+  const optText = (k, v) => Array.isArray(v) ? v.map(t).join(', ') : ['gender','transport','source'].includes(k) && v ? t(v) : v;
+  const rows = [['position', jobName], ...['name','ic','phone','email','gender','area','languages','transport','expectedSalary','startDate'].map(k => [k, optText(k, S.data[k])])];
+  if (!S.data.noPrevJob) rows.push(['prevCompany', S.data.prevCompany], ['prevPosition', S.data.prevPosition]);
+  rows.push(['files', T.filesCount[S.lang](Object.keys(S.files).length)]);
+  return `<dl class="review">` + rows.filter(r => r[1]).map(([k, v]) => `<dt>${t(k).replace(/（.*?）|\(.*?\)/g, '')}</dt><dd>${esc(v)}</dd>`).join('') + `</dl>
+    <label class="toggle consent ${S.errors.consent ? 'invalid' : ''}" style="align-items:flex-start;font-weight:600">
+      <input type="checkbox" id="consent" ${S.consent ? 'checked' : ''} style="margin-top:2px;flex:none"> <span>${t('consent')}</span>
+    </label>
+    ${S.errors.consent ? `<p class="error">${t('needConsent')}</p>` : ''}`;
+}
+
+/* ---------- events ---------- */
+function bind(){
+  document.querySelectorAll('.job').forEach(b => b.onclick = () => {
+    S.data.jobId = b.dataset.job; delete S.errors.jobId; render();
+  });
+  document.querySelectorAll('#card input:not([type=file]), #card select, #card textarea').forEach(el => {
+    if (el.id === 'noPrevJob') { el.onchange = () => { S.data.noPrevJob = el.checked; S.errors = {}; render(); }; return; }
+    if (el.id === 'consent') { el.onchange = () => { S.consent = el.checked; delete S.errors.consent; }; return; }
+    const h = () => {
+      if (el.type === 'checkbox') S.data[el.name] = [...document.querySelectorAll(`input[name="${el.name}"]:checked`)].map(x => x.value);
+      else if (el.type === 'radio') { if (el.checked) S.data[el.name] = el.value; }
+      else S.data[el.name] = el.value;
+    };
+    el.addEventListener('input', h); el.addEventListener('change', h);
+  });
+  document.querySelectorAll('input[type=file]').forEach(el => el.onchange = async () => {
+    const file = el.files[0]; if (!file) return;
+    const k = el.dataset.file;
+    try {
+      S.files[k] = await readFile(file);
+      delete S.errors[k];
+    } catch (e) { S.errors[k] = e.message in T ? e.message : 'readFail'; }
+    render();
+  });
+}
+
+async function readFile(file){
+  const type = file.type || '';
+  if (type === 'application/pdf') {
+    if (file.size > 8e6) throw new Error('tooBig');
+    const url = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(file); });
+    return { data: url.split(',')[1], mime: 'application/pdf', name: file.name, preview: null };
+  }
+  if (type && !type.startsWith('image/')) throw new Error('badType');
+  const url = await compressImage(file);
+  return { data: url.split(',')[1], mime: 'image/jpeg', name: file.name, preview: url };
+}
+
+async function compressImage(file, max = 1600, q = 0.82){
+  const src = URL.createObjectURL(file);
+  try {
+    const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error('readFail')); i.src = src; });
+    const s = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+    const c = document.createElement('canvas');
+    c.width = Math.round(img.naturalWidth * s); c.height = Math.round(img.naturalHeight * s);
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+    ctx.drawImage(img, 0, 0, c.width, c.height);
+    return c.toDataURL('image/jpeg', q);
+  } finally { URL.revokeObjectURL(src); }
+}
+
+/* ---------- validation ---------- */
+function validate(){
+  const e = {};
+  const d = S.data;
+  if (S.step === 0 && !d.jobId) e.jobId = 'pickJob';
+  if (S.step === 1 || S.step === 2) {
+    FIELDS[S.step].forEach(f => {
+      if (S.step === 2 && d.noPrevJob && (f.req === 'job' || f.jobOnly)) return;
+      const req = f.req === 1 || (f.req === 'job' && !d.noPrevJob);
+      const v = d[f.k];
+      const empty = Array.isArray(v) ? !v.length : !String(v ?? '').trim();
+      if (req && empty) { e[f.k] = 'required'; return; }
+      if (empty) return;
+      if (f.check === 'ic' && String(v).replace(/\D/g, '').length !== 12) e[f.k] = 'badIc';
+      if (f.check === 'phone' && !/^(\+?6?0)1\d{7,9}$/.test(String(v).replace(/[\s-]/g, ''))) e[f.k] = 'badPhone';
+      if (f.check === 'email' && !/^\S+@\S+\.\S+$/.test(v)) e[f.k] = 'badEmail';
+    });
+  }
+  if (S.step === 3 && !S.files.selfie) e.selfie = 'needSelfie';
+  if (S.step === 4) DOCS.forEach(x => {
+    if (x.k === 'payslip' && d.noPrevJob) return;
+    if (!S.files[x.k]) e[x.k] = 'needFile';
+  });
+  if (S.step === 5 && !S.consent) e.consent = 'needConsent';
+  S.errors = e;
+  return !Object.keys(e).length;
+}
+
+/* ---------- navigation ---------- */
+$('nextBtn').onclick = async () => {
+  if (!validate()) {
+    render();
+    const first = document.querySelector('.invalid, .error');
+    if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+  if (S.step === 5) return submit();
+  S.step++; render(S.step - 1); window.scrollTo(0, 0);
+};
+$('backBtn').onclick = () => { S.errors = {}; S.step--; render(); window.scrollTo(0, 0); };
+
+/* ---------- submit ---------- */
+async function submit(){
+  const d = S.data;
+  const zh = k => T[k] ? T[k].zh : k;               // Sheet 一律存中文選項
+  const job = S.jobs.find(j => j.id === d.jobId);
+  const hp = document.querySelector('input[name=website]');
+  const data = {
+    jobId: d.jobId, jobTitle: job ? (job.zh || job.en) : '',
+    name: (d.name || '').trim(), ic: (d.ic || '').trim(), phone: (d.phone || '').trim(), email: (d.email || '').trim(),
+    gender: zh(d.gender), area: d.area || '', address: d.address || '',
+    languages: (d.languages || []).map(zh).join(', '), transport: zh(d.transport),
+    expectedSalary: d.expectedSalary || '', startDate: d.startDate || '', source: d.source ? zh(d.source) : '',
+    noPrevJob: d.noPrevJob ? '是' : '',
+    prevCompany: d.noPrevJob ? '' : (d.prevCompany || ''), prevPosition: d.noPrevJob ? '' : (d.prevPosition || ''),
+    prevDuration: d.noPrevJob ? '' : (d.prevDuration || ''), leaveReason: d.noPrevJob ? '' : (d.leaveReason || ''),
+    experience: d.experience || '', lang: S.lang.toUpperCase(), website: d.website || (hp ? hp.value : '')
+  };
+  const files = {};
+  Object.entries(S.files).forEach(([k, f]) => { if (k === 'payslip' && d.noPrevJob) return; files[k] = { data: f.data, mime: f.mime }; });
+
+  $('overlayText').textContent = t('uploading');
+  $('overlay').classList.add('on');
+  $('nextBtn').disabled = true;
+  try {
+    const r = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'submit', data, files }) });
+    const j = await r.json();
+    if (!j.ok) throw new Error(j.error || 'Unknown error');
+    showDone(j.id);
+  } catch (err) {
+    alert(t('submitFail') + err.message + '\n' + t('tryAgain'));
+  } finally {
+    $('overlay').classList.remove('on');
+    $('nextBtn').disabled = false;
+  }
+}
+
+function showDone(id){
+  $('app').hidden = true; $('nav').hidden = true;
+  $('doneView').hidden = false;
+  $('doneView').innerHTML = `<div class="trail" style="justify-content:center">${FOOT.repeat(6).replace(/<svg/g, '<svg class="done"')}</div>
+    <h2>${t('doneTitle')}</h2><div class="hint">${t('doneRef')}</div><div class="ref">${esc(id)}</div><p>${t('doneText')}</p>`;
+  window.scrollTo(0, 0);
+}
+
+/* ---------- boot ---------- */
+initLang();
+render();
+fetch(GAS_URL + '?action=jobs').then(r => r.json()).then(j => {
+  S.jobs = j.jobs || [];
+  const pre = new URLSearchParams(location.search).get('job');   // QR 可帶 ?job=ID 預選職位
+  if (pre && S.jobs.some(x => x.id === pre)) S.data.jobId = pre;
+  render();
+}).catch(() => { S.jobsErr = true; render(); });
+</script>
+</body>
+</html>

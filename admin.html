@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>招聘後台 · Tinker Toddler</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+:root{
+  --ink:#22314F; --paper:#FFFFFF; --sky:#DCEEFA; --sun:#FFCF5A; --leaf:#2F8F62;
+  --line:#D5DEE8; --muted:#5C6B84; --err:#C2413A; --soft:#F5F9FC;
+  --cjk:"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
+  --display:"Baloo 2",var(--cjk); --body:"Nunito Sans",var(--cjk);
+  --s-pending:#FFF1C9; --s-interview:#DCEEFA; --s-hired:#D6F0E2; --s-rejected:#F3E1E0;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--soft);color:var(--ink);font:15px/1.5 var(--body);
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+input,select,textarea{font:15px var(--body);color:var(--ink);border:1.5px solid var(--line);border-radius:10px;padding:9px 12px;background:var(--paper)}
+[hidden]{display:none!important}
+
+/* login */
+.login{min-height:100%;display:grid;place-items:center;padding:20px}
+.login form{background:var(--paper);border:1.5px solid var(--line);border-radius:18px;padding:28px;width:100%;max-width:340px}
+.login h1{font:700 26px/1.2 var(--display);margin:0 0 4px}
+.login p{color:var(--muted);margin:0 0 18px}
+.login input{width:100%;margin-bottom:12px}
+.btn{border:0;border-radius:10px;padding:10px 16px;font-weight:700}
+.btn.primary{background:var(--sun)}
+.btn.ghost{background:var(--paper);border:1.5px solid var(--line)}
+.btn.full{width:100%}
+.err{color:var(--err);font-weight:600;font-size:14px}
+
+/* shell */
+.top{display:flex;align-items:center;gap:14px;padding:14px 20px;background:var(--paper);border-bottom:1.5px solid var(--line);flex-wrap:wrap}
+.top h1{font:700 20px/1 var(--display);margin:0;margin-right:auto}
+.tabs{display:flex;gap:4px}
+.tabs button{border:0;background:none;padding:8px 12px;border-radius:8px;font-weight:700;color:var(--muted)}
+.tabs button[aria-selected="true"]{background:var(--sky);color:var(--ink)}
+
+.main{display:grid;grid-template-columns:minmax(320px,420px) 1fr;height:calc(100vh - 62px)}
+.side{border-right:1.5px solid var(--line);display:flex;flex-direction:column;min-height:0;background:var(--paper)}
+.filters{padding:14px 16px;display:grid;gap:10px;border-bottom:1.5px solid var(--line)}
+.status-row{display:flex;gap:6px;flex-wrap:wrap}
+.status-row button{border:1.5px solid var(--line);background:var(--paper);border-radius:999px;padding:5px 11px;font-size:13px;font-weight:700}
+.status-row button[aria-pressed="true"]{border-color:var(--ink);background:var(--ink);color:#fff}
+.status-row b{font-weight:700;opacity:.65;margin-left:3px}
+.filters .row{display:flex;gap:8px}
+.filters .row > *{flex:1;min-width:0}
+.list{overflow:auto;flex:1}
+.item{display:flex;gap:12px;align-items:center;width:100%;text-align:left;border:0;border-bottom:1px solid var(--line);background:none;padding:12px 16px}
+.item[aria-current="true"]{background:var(--sky)}
+.avatar{flex:none;width:40px;height:40px;border-radius:50%;background:var(--sky);display:grid;place-items:center;font:700 16px var(--display)}
+.item[aria-current="true"] .avatar{background:var(--paper)}
+.item .who{flex:1;min-width:0}
+.item .who strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item .who span{font-size:13px;color:var(--muted);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.badge{flex:none;font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px}
+.b-待審{background:var(--s-pending)} .b-面試{background:var(--s-interview)} .b-錄取{background:var(--s-hired)} .b-拒絕{background:var(--s-rejected)}
+.dup{color:var(--err);font-weight:700}
+.empty{padding:40px 20px;color:var(--muted);text-align:center}
+
+.detail{overflow:auto;padding:24px 28px 60px;min-height:0}
+.detail .back{display:none}
+.dhead{display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin-bottom:18px}
+.dhead h2{font:700 28px/1.1 var(--display);margin:0}
+.dhead .meta{color:var(--muted);font-size:14px}
+.selfie{width:96px;height:96px;border-radius:50%;background:var(--sky);object-fit:cover;flex:none}
+.statusbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px}
+.statusbar button{border:1.5px solid var(--line);background:var(--paper);border-radius:10px;padding:9px 16px;font-weight:700}
+.statusbar button[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 0 -3px 0 var(--ink)}
+.statusbar .sp-待審[aria-pressed="true"]{background:var(--s-pending)}
+.statusbar .sp-面試[aria-pressed="true"]{background:var(--s-interview)}
+.statusbar .sp-錄取[aria-pressed="true"]{background:var(--s-hired)}
+.statusbar .sp-拒絕[aria-pressed="true"]{background:var(--s-rejected)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
+.actions a{text-decoration:none;color:var(--ink)}
+.sec{background:var(--paper);border:1.5px solid var(--line);border-radius:14px;padding:18px 20px;margin-bottom:16px}
+.sec h3{font:700 17px var(--display);margin:0 0 12px}
+dl.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px 20px;margin:0}
+dl.grid div{min-width:0}
+dl.grid dt{font-size:13px;color:var(--muted)}
+dl.grid dd{margin:2px 0 0;font-weight:600;word-break:break-word;white-space:pre-wrap}
+.docs{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+.doc{border:1.5px solid var(--line);border-radius:12px;overflow:hidden;background:var(--soft);display:flex;flex-direction:column}
+.doc .img{aspect-ratio:4/3;display:grid;place-items:center;color:var(--muted);font-size:13px;cursor:zoom-in}
+.doc .img img{width:100%;height:100%;object-fit:cover}
+.doc .cap{padding:8px 10px;display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:14px;background:var(--paper)}
+.doc .cap a{font-size:13px;color:var(--ink)}
+textarea.note{width:100%;min-height:90px;resize:vertical}
+.saved{color:var(--leaf);font-weight:700;font-size:14px;margin-left:10px}
+.lightbox{position:fixed;inset:0;background:rgba(20,28,45,.88);display:grid;place-items:center;z-index:20;padding:20px;cursor:zoom-out}
+.lightbox img{max-width:100%;max-height:100%;border-radius:8px}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:10px;font-weight:700;z-index:30}
+
+/* QR */
+.qrpage{padding:24px 28px;max-width:1100px}
+.qrpage .urlrow{display:flex;gap:8px;margin:6px 0 22px;flex-wrap:wrap}
+.qrpage .urlrow input{flex:1;min-width:240px}
+.qrgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px}
+.qr{background:var(--paper);border:1.5px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
+.qr .code{width:180px;height:180px}
+.qr .code img,.qr .code canvas{width:180px!important;height:180px!important}
+.qr strong{font:700 17px/1.25 var(--display)}
+.qr small{color:var(--muted);word-break:break-all}
+
+@media (max-width:800px){
+  .main{grid-template-columns:1fr;height:auto}
+  .side{border-right:0;min-height:calc(100vh - 62px)}
+  .main.open .side{display:none}
+  .main:not(.open) .detail{display:none}
+  .detail{padding:16px 16px 60px}
+  .detail .back{display:inline-block;margin-bottom:14px}
+  .actions{margin-left:0}
+}
+</style>
+</head>
+<body>
+
+<div class="login" id="loginView">
+  <form id="loginForm">
+    <h1>招聘後台</h1>
+    <p>Tinker Toddler</p>
+    <input type="password" id="pw" placeholder="管理密碼" autocomplete="current-password" required>
+    <button class="btn primary full" type="submit" id="loginBtn">登入</button>
+    <p class="err" id="loginErr" style="margin:10px 0 0"></p>
+  </form>
+</div>
+
+<div id="appView" hidden>
+  <div class="top">
+    <h1>招聘後台</h1>
+    <div class="tabs" role="tablist">
+      <button role="tab" aria-selected="true" data-tab="apps">申請</button>
+      <button role="tab" aria-selected="false" data-tab="qr">QR 碼</button>
+    </div>
+    <button class="btn ghost" id="refreshBtn">重新整理</button>
+    <button class="btn ghost" id="logoutBtn">登出</button>
+  </div>
+
+  <div class="main" id="tab-apps">
+    <aside class="side">
+      <div class="filters">
+        <div class="status-row" id="statusRow"></div>
+        <div class="row">
+          <select id="jobFilter"><option value="">所有職位</option></select>
+          <input type="search" id="search" placeholder="搜尋姓名、電話、IC、編號">
+        </div>
+      </div>
+      <div class="list" id="list"></div>
+    </aside>
+    <section class="detail" id="detail"><div class="empty">從左邊選擇一位應徵者查看資料。</div></section>
+  </div>
+
+  <div class="qrpage" id="tab-qr" hidden>
+    <div class="sec" style="margin-bottom:18px">
+      <h3>應徵表單網址</h3>
+      <div class="urlrow">
+        <input id="applyUrl" type="url">
+        <button class="btn primary" id="genQr">產生 QR 碼</button>
+      </div>
+      <div style="color:var(--muted);font-size:14px">「所有職位」讓應徵者自己選；指定職位的 QR 會自動預選該職位，適合貼在該店的海報上。</div>
+    </div>
+    <div class="qrgrid" id="qrGrid"></div>
+  </div>
+</div>
+
+<script>
+/* ============ 設定：換成你的 Apps Script 網址 ============ */
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzUnLRhyMmZA11bBvI1WP9gfNOky1mtuFMMHiGQzZ8l8yMUrKY0b1-En2PpPXR8D2KI/exec';
+
+const STATUSES = ['待審', '面試', '錄取', '拒絕'];
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let PW = '';
+let APPS = [];
+let current = null;
+let statusFilter = '';
+const imgCache = {};
+
+try { PW = sessionStorage.getItem('tt-admin') || ''; } catch(e){}
+
+async function api(action, extra = {}){
+  const r = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action, password: PW, ...extra }) });
+  const j = await r.json();
+  if (!j.ok) throw new Error(j.error || 'Error');
+  return j;
+}
+function toast(msg){
+  const el = document.createElement('div'); el.className = 'toast'; el.textContent = msg;
+  document.body.appendChild(el); setTimeout(() => el.remove(), 2200);
+}
+const fileId = url => (String(url || '').match(/\/d\/([\w-]+)/) || [])[1];
+const fmtDate = iso => {
+  if (!iso) return '';
+  const d = new Date(iso); if (isNaN(d)) return iso;
+  const p = n => String(n).padStart(2, '0');
+  return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
+};
+const fmtDay = iso => { const d = new Date(iso); return isNaN(d) || !/^\d{4}-/.test(iso) ? iso : fmtDate(iso).slice(0, 10); };
+const waLink = phone => {
+  let n = String(phone || '').replace(/\D/g, '');
+  if (n.startsWith('0')) n = '6' + n;
+  return 'https://wa.me/' + n;
+};
+
+/* ---------- login ---------- */
+$('loginForm').onsubmit = async e => {
+  e.preventDefault();
+  PW = $('pw').value;
+  $('loginBtn').disabled = true; $('loginErr').textContent = '';
+  try { await load(); try { sessionStorage.setItem('tt-admin', PW); } catch(e){} showApp(); }
+  catch (err) { $('loginErr').textContent = err.message === 'AUTH' ? '密碼不正確。' : '無法連線：' + err.message; }
+  finally { $('loginBtn').disabled = false; }
+};
+$('logoutBtn').onclick = () => { try { sessionStorage.removeItem('tt-admin'); } catch(e){} location.reload(); };
+function showApp(){ $('loginView').hidden = true; $('appView').hidden = false; }
+
+/* ---------- data ---------- */
+async function load(){
+  const j = await api('list');
+  APPS = j.apps || [];
+  const jobs = [...new Set(APPS.map(a => a.jobTitle).filter(Boolean))];
+  const sel = $('jobFilter'), keep = sel.value;
+  sel.innerHTML = '<option value="">所有職位</option>' + jobs.map(x => `<option>${esc(x)}</option>`).join('');
+  sel.value = jobs.includes(keep) ? keep : '';
+  renderList();
+  if (current) { const a = APPS.find(x => x.id === current); if (a) renderDetail(a); }
+}
+$('refreshBtn').onclick = async () => {
+  $('refreshBtn').disabled = true;
+  try { await load(); toast('已更新'); } catch (e) { toast('更新失敗：' + e.message); }
+  $('refreshBtn').disabled = false;
+};
+
+/* ---------- list ---------- */
+function filtered(){
+  const q = $('search').value.trim().toLowerCase();
+  const job = $('jobFilter').value;
+  return APPS.filter(a =>
+    (!statusFilter || a.status === statusFilter) &&
+    (!job || a.jobTitle === job) &&
+    (!q || [a.name, a.phone, a.ic, a.id, a.area].some(v => String(v || '').toLowerCase().includes(q))));
+}
+function renderList(){
+  const counts = {}; APPS.forEach(a => counts[a.status] = (counts[a.status] || 0) + 1);
+  $('statusRow').innerHTML = [['', '全部', APPS.length], ...STATUSES.map(s => [s, s, counts[s] || 0])]
+    .map(([v, l, n]) => `<button data-s="${v}" aria-pressed="${statusFilter === v}">${l}<b>${n}</b></button>`).join('');
+  $('statusRow').querySelectorAll('button').forEach(b => b.onclick = () => { statusFilter = b.dataset.s; renderList(); });
+
+  const list = filtered();
+  $('list').innerHTML = list.length ? list.map(a => `
+    <button class="item" data-id="${esc(a.id)}" aria-current="${a.id === current}">
+      <span class="avatar">${esc((a.name || '?').trim().charAt(0).toUpperCase())}</span>
+      <span class="who"><strong>${esc(a.name)}${a.duplicateOf ? ' <span class="dup" title="此 IC 之前申請過">重複</span>' : ''}</strong>
+        <span>${esc(a.jobTitle)}，${fmtDate(a.submittedAt)}</span></span>
+      <span class="badge b-${esc(a.status)}">${esc(a.status)}</span>
+    </button>`).join('') : `<div class="empty">${APPS.length ? '沒有符合條件的申請。' : '還沒有申請。把 QR 碼貼出去後，新申請會出現在這裡。'}</div>`;
+  $('list').querySelectorAll('.item').forEach(b => b.onclick = () => {
+    current = b.dataset.id; renderList(); renderDetail(APPS.find(a => a.id === current));
+    $('tab-apps').classList.add('open'); $('detail').scrollTop = 0;
+  });
+}
+$('search').oninput = renderList;
+$('jobFilter').onchange = renderList;
+
+/* ---------- detail ---------- */
+function renderDetail(a){
+  if (!a) return;
+  const F = (label, v) => v ? `<div><dt>${label}</dt><dd>${esc(v)}</dd></div>` : '';
+  const docs = [['selfie','Selfie'],['icFront','IC 正面'],['icBack','IC 背面'],['resume','Resume'],['payslip','Payslip']];
+  $('detail').innerHTML = `
+    <button class="btn ghost back" id="backBtn">返回列表</button>
+    <div class="dhead">
+      <img class="selfie" id="selfieImg" alt="">
+      <div>
+        <h2>${esc(a.name)}</h2>
+        <div class="meta">${esc(a.jobTitle)}，${esc(a.id)}，${fmtDate(a.submittedAt)}</div>
+        ${a.duplicateOf ? `<div class="dup" style="font-size:14px">此 IC 之前申請過：${esc(a.duplicateOf)}</div>` : ''}
+      </div>
+      <div class="actions">
+        <a class="btn primary" href="${waLink(a.phone)}" target="_blank" rel="noopener">WhatsApp</a>
+        ${a.folderUrl ? `<a class="btn ghost" href="${esc(a.folderUrl)}" target="_blank" rel="noopener">Drive 資料夾</a>` : ''}
+      </div>
+    </div>
+    <div class="statusbar">${STATUSES.map(s => `<button class="sp-${s}" data-s="${s}" aria-pressed="${a.status === s}">${s}</button>`).join('')}</div>
+
+    <div class="sec"><h3>個人資料</h3><dl class="grid">
+      ${F('IC 號碼', a.ic)}${F('電話', a.phone)}${F('電郵', a.email)}${F('性別', a.gender)}
+      ${F('居住地區', a.area)}${F('地址', a.address)}${F('語言', a.languages)}${F('交通', a.transport)}
+      ${F('期望薪資', a.expectedSalary ? 'RM ' + a.expectedSalary : '')}${F('最快上班', fmtDay(a.startDate))}
+      ${F('得知管道', a.source)}${F('表單語言', a.lang)}
+    </dl></div>
+
+    <div class="sec"><h3>工作經驗</h3><dl class="grid">
+      ${a.noPrevJob ? F('經驗', '第一份工作') : F('上一份公司', a.prevCompany) + F('職位', a.prevPosition) + F('工作期間', a.prevDuration) + F('離職原因', a.leaveReason)}
+      ${F('相關經驗', a.experience)}
+    </dl></div>
+
+    <div class="sec"><h3>文件</h3><div class="docs">
+      ${docs.filter(([k]) => a[k]).map(([k, l]) => `
+        <div class="doc"><div class="img" data-k="${k}" data-fid="${fileId(a[k])}">載入中…</div>
+          <div class="cap">${l}<a href="${esc(a[k])}" target="_blank" rel="noopener">在 Drive 開啟</a></div></div>`).join('')}
+    </div></div>
+
+    <div class="sec"><h3>管理備註</h3>
+      <textarea class="note" id="note" placeholder="例如：面試時間、印象、薪資討論">${esc(a.adminNote)}</textarea>
+      <div style="margin-top:10px"><button class="btn primary" id="saveNote">儲存備註</button><span class="saved" id="savedMsg"></span></div>
+    </div>`;
+
+  $('backBtn').onclick = () => { $('tab-apps').classList.remove('open'); };
+  $('detail').querySelectorAll('.statusbar button').forEach(b => b.onclick = () => setStatus(a, b.dataset.s));
+  $('saveNote').onclick = async () => {
+    const v = $('note').value;
+    $('saveNote').disabled = true;
+    try { await api('update', { id: a.id, adminNote: v }); a.adminNote = v; $('savedMsg').textContent = '已儲存'; }
+    catch (e) { toast('儲存失敗：' + e.message); }
+    $('saveNote').disabled = false;
+  };
+  loadImages(a);
+}
+
+async function setStatus(a, s){
+  if (a.status === s) return;
+  const prev = a.status; a.status = s; renderList(); renderDetail(a);
+  try { await api('update', { id: a.id, status: s }); toast(`${a.name}：${s}`); }
+  catch (e) { a.status = prev; renderList(); renderDetail(a); toast('更新失敗：' + e.message); }
+}
+
+async function getImage(fid){
+  if (!imgCache[fid]) imgCache[fid] = api('file', { fileId: fid }).then(j => j.mime.startsWith('image/') ? `data:${j.mime};base64,${j.data}` : null);
+  return imgCache[fid];
+}
+function loadImages(a){
+  const sid = fileId(a.selfie);
+  if (sid) getImage(sid).then(src => { const el = $('selfieImg'); if (el && src && current === a.id) el.src = src; }).catch(() => {});
+  $('detail').querySelectorAll('.doc .img').forEach(box => {
+    const k = box.dataset.k, fid = box.dataset.fid;
+    if (!fid) { box.textContent = '無檔案'; return; }
+    getImage(fid).then(src => {
+      if (current !== a.id) return;
+      if (src) { box.innerHTML = `<img src="${src}" alt="">`; box.onclick = () => lightbox(src); }
+      else box.textContent = 'PDF 檔案，請在 Drive 開啟';
+    }).catch(() => { box.textContent = '無法載入'; });
+  });
+}
+function lightbox(src){
+  const el = document.createElement('div'); el.className = 'lightbox';
+  el.innerHTML = `<img src="${src}" alt="">`; el.onclick = () => el.remove();
+  document.body.appendChild(el);
+}
+
+/* ---------- tabs ---------- */
+document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.tabs button').forEach(x => x.setAttribute('aria-selected', x === b));
+  $('tab-apps').hidden = b.dataset.tab !== 'apps';
+  $('tab-qr').hidden = b.dataset.tab !== 'qr';
+  if (b.dataset.tab === 'qr' && !$('qrGrid').children.length) genQr();
+});
+
+/* ---------- QR ---------- */
+try { $('applyUrl').value = localStorage.getItem('tt-apply-url') || location.href.replace(/admin\.html.*$/, 'apply.html'); }
+catch(e){ $('applyUrl').value = location.href.replace(/admin\.html.*$/, 'apply.html'); }
+$('genQr').onclick = genQr;
+
+async function genQr(){
+  const base = $('applyUrl').value.trim().split('?')[0];
+  try { localStorage.setItem('tt-apply-url', base); } catch(e){}
+  $('qrGrid').innerHTML = '<div class="empty">正在載入職位…</div>';
+  let jobs = [];
+  try { jobs = (await (await fetch(GAS_URL + '?action=jobs')).json()).jobs || []; } catch (e) {}
+  const items = [{ title: '所有職位', url: base }, ...jobs.map(j => ({ title: j.zh || j.en, sub: j.location, url: base + '?job=' + encodeURIComponent(j.id) }))];
+  $('qrGrid').innerHTML = items.map((it, i) => `
+    <div class="qr"><div class="code" id="qr${i}"></div><strong>${esc(it.title)}</strong>
+      ${it.sub ? `<div style="color:var(--muted);font-size:14px">${esc(it.sub)}</div>` : ''}
+      <small>${esc(it.url)}</small>
+      <button class="btn ghost" data-i="${i}" data-name="${esc(it.title)}">下載 PNG</button></div>`).join('');
+  items.forEach((it, i) => new QRCode($('qr' + i), { text: it.url, width: 720, height: 720, correctLevel: QRCode.CorrectLevel.M }));
+  $('qrGrid').querySelectorAll('button[data-i]').forEach(b => b.onclick = () => {
+    const c = $('qr' + b.dataset.i).querySelector('canvas');
+    const a = document.createElement('a');
+    a.href = c.toDataURL('image/png'); a.download = `QR-${b.dataset.name}.png`; a.click();
+  });
+}
+
+/* ---------- boot ---------- */
+if (PW) load().then(showApp).catch(() => { PW = ''; });
+</script>
+</body>
+</html>
