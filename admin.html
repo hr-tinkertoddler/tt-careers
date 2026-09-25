@@ -301,7 +301,7 @@ function renderDetail(a){
 
     <div class="sec"><h3>工作經驗</h3><dl class="grid">
       ${a.noPrevJob ? F('經驗', '第一份工作') : F('上一份公司', a.prevCompany) + F('職位', a.prevPosition) + F('工作期間', a.prevDuration) + F('離職原因', a.leaveReason)}
-      ${F('Freelance 可做', a.freelanceWork)}${F('相關經驗', a.experience)}
+      ${F('Freelance 可做', a.freelanceWork)}${F('可上班時間', a.availability)}${F('相關經驗', a.experience)}
     </dl></div>
 
     <div class="sec"><h3>文件</h3><div class="docs">

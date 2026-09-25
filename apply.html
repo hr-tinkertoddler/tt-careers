@@ -117,6 +117,12 @@ dl.review dd{margin:0;font-weight:600;word-break:break-word}
 .done{text-align:center;padding:40px 10px}
 .done h2{font-size:30px}
 .ref{display:inline-block;font:700 22px var(--display);background:var(--sky);padding:8px 18px;border-radius:12px;margin:8px 0 16px}
+.avail{display:grid;grid-template-columns:40px repeat(3,1fr);gap:6px;border:1.5px solid transparent;border-radius:12px}
+.avail .h{font-size:13px;font-weight:700;color:var(--muted);text-align:center;align-self:end}
+.avail .d{font-weight:700;display:flex;align-items:center}
+.avail button{border:1.5px solid var(--line);background:var(--paper);border-radius:10px;height:42px;font:700 16px var(--body);color:var(--ink);cursor:pointer}
+.avail button[aria-pressed="true"]{background:var(--sun);border-color:var(--ink)}
+.invalid .avail{border-color:var(--err)}
 .hp{position:absolute;left:-9999px}
 [hidden]{display:none!important}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
@@ -174,6 +180,12 @@ const T = {
   fw_other:{zh:'其他',en:'Other',ms:'Lain-lain'},
   fwOtherPh:{zh:'請說明其他可以做的工作',en:'Describe the other work you can do',ms:'Nyatakan kerja lain yang boleh anda lakukan'},
   needFw:{zh:'請至少選一項',en:'Choose at least one',ms:'Pilih sekurang-kurangnya satu'},
+  avail:{zh:'可以上班的時間',en:'When can you work?',ms:'Bila anda boleh bekerja?'},
+  availHint:{zh:'點選所有可以上班的時段',en:'Tap every time slot you are available',ms:'Ketik semua slot masa anda boleh bekerja'},
+  availLabel:{zh:'可上班時間',en:'Availability',ms:'Masa tersedia'},
+  needAvail:{zh:'請至少選一個時段',en:'Choose at least one time slot',ms:'Pilih sekurang-kurangnya satu slot masa'},
+  days:{zh:['週一','週二','週三','週四','週五','週六','週日'],en:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],ms:['Isn','Sel','Rab','Kha','Jum','Sab','Ahd']},
+  slots:{zh:['早上','下午','晚上'],en:['Morning','Afternoon','Evening'],ms:['Pagi','Petang','Malam']},
   pickJob:{zh:'請選擇一個職位',en:'Choose a position to continue',ms:'Pilih satu jawatan untuk teruskan'},
 
   name:{zh:'全名（依照 IC）',en:'Full name (as per IC)',ms:'Nama penuh (seperti dalam IC)'},
@@ -193,6 +205,7 @@ const T = {
   car:{zh:'自己有車',en:'Own car',ms:'Kereta sendiri'}, motor:{zh:'電單車',en:'Motorcycle',ms:'Motosikal'},
   public:{zh:'大眾交通',en:'Public transport',ms:'Pengangkutan awam'},
   expectedSalary:{zh:'期望薪資（RM / 月）',en:'Expected salary (RM / month)',ms:'Gaji dijangka (RM / bulan)'},
+  expectedDaily:{zh:'期望日薪（RM / 天）',en:'Expected daily rate (RM / day)',ms:'Kadar harian dijangka (RM / hari)'},
   startDate:{zh:'最快可上班日期',en:'Earliest start date',ms:'Tarikh mula paling awal'},
   source:{zh:'從哪裡得知這個職位？',en:'Where did you hear about this job?',ms:'Di mana anda tahu tentang jawatan ini?'},
   choose:{zh:'請選擇',en:'Choose one',ms:'Pilih satu'},
@@ -282,6 +295,7 @@ const S = { lang:'zh', step:0, jobs:null, jobsErr:false, data:{}, files:{}, erro
 const $ = id => document.getElementById(id);
 const t = k => (T[k] ? T[k][S.lang] : k);
 const isFreelance = () => /^FREELANCE/i.test(S.data.jobId || '');
+const lbl = k => t(k === 'expectedSalary' && isFreelance() ? 'expectedDaily' : k);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 /* ---------- language ---------- */
@@ -332,7 +346,28 @@ function freelanceBlock(){
   return `<div class="field ${e1 ? 'invalid' : ''}" style="margin-top:22px"><span class="lbl req">${t('freelanceWork')}</span>
     <div class="chips">${['fw_counter','fw_delivery','fw_other'].map(o => `<label><input type="checkbox" name="freelanceTasks" value="${o}" ${v.includes(o) ? 'checked' : ''}> ${t(o)}</label>`).join('')}</div>
     ${e1 ? `<div class="error">${t(e1)}</div>` : ''}</div>
-    ${v.includes('fw_other') ? `<div class="field ${e2 ? 'invalid' : ''}"><input id="f_freelanceOther" name="freelanceOther" type="text" placeholder="${t('fwOtherPh')}" value="${esc(S.data.freelanceOther)}">${e2 ? `<div class="error">${t(e2)}</div>` : ''}</div>` : ''}`;
+    ${v.includes('fw_other') ? `<div class="field ${e2 ? 'invalid' : ''}"><input id="f_freelanceOther" name="freelanceOther" type="text" placeholder="${t('fwOtherPh')}" value="${esc(S.data.freelanceOther)}">${e2 ? `<div class="error">${t(e2)}</div>` : ''}</div>` : ''}
+    ${availBlock()}`;
+}
+
+function availBlock(){
+  const a = S.data.avail || [], e = S.errors.avail;
+  const days = t('days'), slots = t('slots');
+  return `<div class="field ${e ? 'invalid' : ''}"><span class="lbl req">${t('avail')}</span>
+    <div class="hint" style="margin:-2px 0 10px">${t('availHint')}</div>
+    <div class="avail"><span></span>${slots.map(s => `<span class="h">${s}</span>`).join('')}
+      ${days.map((d, i) => `<span class="d">${d.replace('週', '')}</span>` + slots.map((s, j) => {
+        const k = i + '-' + j, on = a.includes(k);
+        return `<button type="button" data-slot="${k}" aria-pressed="${on}" aria-label="${d} ${s}">${on ? '✓' : ''}</button>`;
+      }).join('')).join('')}
+    </div>${e ? `<div class="error">${t(e)}</div>` : ''}</div>`;
+}
+function availText(lang){
+  const a = S.data.avail || [], D = T.days[lang], SL = T.slots[lang];
+  return D.map((d, i) => {
+    const s = [0, 1, 2].filter(j => a.includes(i + '-' + j)).map(j => SL[j]);
+    return s.length ? d + ' ' + s.join('/') : '';
+  }).filter(Boolean).join(', ');
 }
 
 function stepFields(){
@@ -348,12 +383,12 @@ function stepFields(){
     if (f.type === 'radio' || f.type === 'check') {
       const arr = f.type === 'check' ? (v || []) : [v];
       ctrl = `<div class="chips">` + f.opts.map(o => `<label><input type="${f.type === 'check' ? 'checkbox' : 'radio'}" name="${f.k}" value="${o}" ${arr.includes(o) ? 'checked' : ''}> ${t(o)}</label>`).join('') + `</div>`;
-      html += `<div class="field ${err ? 'invalid' : ''}"><span class="lbl ${req ? 'req' : ''}">${t(f.k)}</span>${ctrl}`;
+      html += `<div class="field ${err ? 'invalid' : ''}"><span class="lbl ${req ? 'req' : ''}">${lbl(f.k)}</span>${ctrl}`;
     } else {
       if (f.type === 'select') ctrl = `<select id="f_${f.k}" name="${f.k}"><option value="">${t('choose')}</option>` + f.opts.map(o => `<option value="${o}" ${v === o ? 'selected' : ''}>${t(o)}</option>`).join('') + `</select>`;
       else if (f.type === 'textarea') ctrl = `<textarea id="f_${f.k}" name="${f.k}" ${f.ac ? `autocomplete="${f.ac}"` : ''}>${esc(v)}</textarea>`;
-      else ctrl = `<input id="f_${f.k}" name="${f.k}" type="${f.type || 'text'}" value="${esc(v)}" ${f.inputmode ? `inputmode="${f.inputmode}"` : ''} ${f.ac ? `autocomplete="${f.ac}"` : ''} ${f.type === 'number' ? 'min="0" step="50"' : ''}>`;
-      html += `<div class="field ${err ? 'invalid' : ''}"><label for="f_${f.k}" class="${req ? 'req' : ''}">${t(f.k)}</label>${ctrl}`;
+      else ctrl = `<input id="f_${f.k}" name="${f.k}" type="${f.type || 'text'}" value="${esc(v)}" ${f.inputmode ? `inputmode="${f.inputmode}"` : ''} ${f.ac ? `autocomplete="${f.ac}"` : ''} ${f.type === 'number' ? 'min="0" step="10"' : ''}>`;
+      html += `<div class="field ${err ? 'invalid' : ''}"><label for="f_${f.k}" class="${req ? 'req' : ''}">${lbl(f.k)}</label>${ctrl}`;
     }
     if (f.hint && !err) html += `<div class="hint">${t(f.hint)}</div>`;
     if (err) html += `<div class="error">${t(err)}</div>`;
@@ -396,10 +431,10 @@ function stepReview(){
   const jobName = job[S.lang] || job.en || job.zh || '';
   const optText = (k, v) => Array.isArray(v) ? v.map(t).join(', ') : ['gender','transport','source'].includes(k) && v ? t(v) : v;
   const fw = (S.data.freelanceTasks || []).map(k => k === 'fw_other' ? t(k) + '：' + (S.data.freelanceOther || '') : t(k)).join(', ');
-  const rows = [['position', jobName], ['fwLabel', isFreelance() ? fw : ''], ...['name','ic','phone','email','gender','area','languages','transport','expectedSalary','startDate'].map(k => [k, optText(k, S.data[k])])];
+  const rows = [['position', jobName], ['fwLabel', isFreelance() ? fw : ''], ['availLabel', isFreelance() ? availText(S.lang) : ''], ...['name','ic','phone','email','gender','area','languages','transport','expectedSalary','startDate'].map(k => [k, optText(k, S.data[k])])];
   if (!S.data.noPrevJob) rows.push(['prevCompany', S.data.prevCompany], ['prevPosition', S.data.prevPosition]);
   rows.push(['files', T.filesCount[S.lang](Object.keys(S.files).length)]);
-  return `<dl class="review">` + rows.filter(r => r[1]).map(([k, v]) => `<dt>${t(k).replace(/（.*?）|\(.*?\)/g, '')}</dt><dd>${esc(v)}</dd>`).join('') + `</dl>
+  return `<dl class="review">` + rows.filter(r => r[1]).map(([k, v]) => `<dt>${lbl(k).replace(/（.*?）|\(.*?\)/g, '')}</dt><dd>${esc(v)}</dd>`).join('') + `</dl>
     <label class="toggle consent ${S.errors.consent ? 'invalid' : ''}" style="align-items:flex-start;font-weight:600">
       <input type="checkbox" id="consent" ${S.consent ? 'checked' : ''} style="margin-top:2px;flex:none"> <span>${t('consent')}</span>
     </label>
@@ -408,6 +443,13 @@ function stepReview(){
 
 /* ---------- events ---------- */
 function bind(){
+  document.querySelectorAll('.avail button').forEach(b => b.onclick = () => {
+    const a = S.data.avail = S.data.avail || [];
+    const k = b.dataset.slot, i = a.indexOf(k);
+    if (i >= 0) a.splice(i, 1); else a.push(k);
+    b.setAttribute('aria-pressed', i < 0); b.textContent = i < 0 ? '✓' : '';
+    if (S.errors.avail && a.length) { delete S.errors.avail; render(); }
+  });
   document.querySelectorAll('.job').forEach(b => b.onclick = () => {
     S.data.jobId = b.dataset.job; delete S.errors.jobId; render();
   });
@@ -468,6 +510,7 @@ function validate(){
     const ft = d.freelanceTasks || [];
     if (!ft.length) e.freelanceTasks = 'needFw';
     else if (ft.includes('fw_other') && !String(d.freelanceOther || '').trim()) e.freelanceOther = 'required';
+    if (!(d.avail || []).length) e.avail = 'needAvail';
   }
   if (S.step === 1 || S.step === 2) {
     FIELDS[S.step].forEach(f => {
@@ -516,11 +559,12 @@ async function submit(){
     name: (d.name || '').trim(), ic: (d.ic || '').trim(), phone: (d.phone || '').trim(), email: (d.email || '').trim(),
     gender: zh(d.gender), area: d.area || '', address: d.address || '',
     languages: (d.languages || []).map(zh).join(', '), transport: zh(d.transport),
-    expectedSalary: d.expectedSalary || '', startDate: d.startDate || '', source: d.source ? zh(d.source) : '',
+    expectedSalary: d.expectedSalary ? d.expectedSalary + (isFreelance() ? '/天' : '') : '', startDate: d.startDate || '', source: d.source ? zh(d.source) : '',
     noPrevJob: d.noPrevJob ? '是' : '',
     prevCompany: d.noPrevJob ? '' : (d.prevCompany || ''), prevPosition: d.noPrevJob ? '' : (d.prevPosition || ''),
     prevDuration: d.noPrevJob ? '' : (d.prevDuration || ''), leaveReason: d.noPrevJob ? '' : (d.leaveReason || ''),
     freelanceWork: isFreelance() ? (d.freelanceTasks || []).map(k => k === 'fw_other' ? '其他：' + (d.freelanceOther || '').trim() : zh(k)).join(', ') : '',
+    availability: isFreelance() ? availText('zh') : '',
     experience: d.experience || '', lang: S.lang.toUpperCase(), website: d.website || (hp ? hp.value : '')
   };
   const files = {};
