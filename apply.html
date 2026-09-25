@@ -167,6 +167,13 @@ const T = {
   loadingJobs:{zh:'正在載入職位…',en:'Loading positions…',ms:'Memuatkan jawatan…'},
   noJobs:{zh:'目前沒有開放的職位。',en:'There are no open positions right now.',ms:'Tiada jawatan kosong buat masa ini.'},
   jobsError:{zh:'無法載入職位，請檢查網絡後重新整理頁面。',en:'Could not load positions. Check your connection and refresh the page.',ms:'Gagal memuatkan jawatan. Semak sambungan dan muat semula halaman.'},
+  freelanceWork:{zh:'你可以做哪些工作？',en:'What work can you do?',ms:'Kerja apa yang boleh anda lakukan?'},
+  fwLabel:{zh:'可做工作',en:'Available for',ms:'Boleh buat'},
+  fw_counter:{zh:'顧店',en:'Counter relief',ms:'Ganti kaunter'},
+  fw_delivery:{zh:'送貨補貨',en:'Delivery & restocking',ms:'Penghantaran & tambah stok'},
+  fw_other:{zh:'其他',en:'Other',ms:'Lain-lain'},
+  fwOtherPh:{zh:'請說明其他可以做的工作',en:'Describe the other work you can do',ms:'Nyatakan kerja lain yang boleh anda lakukan'},
+  needFw:{zh:'請至少選一項',en:'Choose at least one',ms:'Pilih sekurang-kurangnya satu'},
   pickJob:{zh:'請選擇一個職位',en:'Choose a position to continue',ms:'Pilih satu jawatan untuk teruskan'},
 
   name:{zh:'全名（依照 IC）',en:'Full name (as per IC)',ms:'Nama penuh (seperti dalam IC)'},
@@ -208,6 +215,7 @@ const T = {
   icFront:{zh:'IC 正面',en:'IC front',ms:'IC depan'}, icBack:{zh:'IC 背面',en:'IC back',ms:'IC belakang'},
   resume:{zh:'履歷（PDF 或照片）',en:'Resume (PDF or photo)',ms:'Resume (PDF atau gambar)'},
   payslip:{zh:'上一份工作的薪資單',en:'Payslip from your last job',ms:'Slip gaji kerja terakhir'},
+  payslipOpt:{zh:'上一份工作的薪資單（可選）',en:'Payslip from your last job (optional)',ms:'Slip gaji kerja terakhir (pilihan)'},
   payslipOff:{zh:'第一份工作，不需要',en:'Not needed for first job',ms:'Tidak perlu untuk kerja pertama'},
   tapUpload:{zh:'點擊上傳',en:'Tap to upload',ms:'Ketik untuk muat naik'},
   uploaded:{zh:'已上傳，點擊更換',en:'Added. Tap to change',ms:'Ditambah. Ketik untuk tukar'},
@@ -273,6 +281,7 @@ const DOCS = [
 const S = { lang:'zh', step:0, jobs:null, jobsErr:false, data:{}, files:{}, errors:{}, consent:false };
 const $ = id => document.getElementById(id);
 const t = k => (T[k] ? T[k][S.lang] : k);
+const isFreelance = () => /^FREELANCE/i.test(S.data.jobId || '');
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 /* ---------- language ---------- */
@@ -313,7 +322,17 @@ function stepJob(){
       <strong>${esc(j[L[0]] || j.en || j.zh)}</strong>
       ${j.location ? `<span class="loc">${esc(j.location)}</span>` : ''}
       ${(j[L[1]] || j.descEn) ? `<p>${esc(j[L[1]] || j.descEn)}</p>` : ''}
-    </button>`).join('') + `</div>` + (S.errors.jobId ? `<p class="error">${t('pickJob')}</p>` : '');
+    </button>`).join('') + `</div>` + (S.errors.jobId ? `<p class="error">${t('pickJob')}</p>` : '') + freelanceBlock();
+}
+
+function freelanceBlock(){
+  if (!isFreelance()) return '';
+  const v = S.data.freelanceTasks || [];
+  const e1 = S.errors.freelanceTasks, e2 = S.errors.freelanceOther;
+  return `<div class="field ${e1 ? 'invalid' : ''}" style="margin-top:22px"><span class="lbl req">${t('freelanceWork')}</span>
+    <div class="chips">${['fw_counter','fw_delivery','fw_other'].map(o => `<label><input type="checkbox" name="freelanceTasks" value="${o}" ${v.includes(o) ? 'checked' : ''}> ${t(o)}</label>`).join('')}</div>
+    ${e1 ? `<div class="error">${t(e1)}</div>` : ''}</div>
+    ${v.includes('fw_other') ? `<div class="field ${e2 ? 'invalid' : ''}"><input id="f_freelanceOther" name="freelanceOther" type="text" placeholder="${t('fwOtherPh')}" value="${esc(S.data.freelanceOther)}">${e2 ? `<div class="error">${t(e2)}</div>` : ''}</div>` : ''}`;
 }
 
 function stepFields(){
@@ -361,10 +380,11 @@ function stepDocs(){
   return `<p class="hint" style="margin-top:-6px">${t('docsHint')}</p><div class="docs">` + DOCS.map(d => {
     const f = S.files[d.k];
     const off = d.k === 'payslip' && S.data.noPrevJob;
+    const opt = d.k === 'payslip' && isFreelance();
     const err = S.errors[d.k];
     return `<label class="doc ${d.wide ? 'wide' : ''} ${f ? 'has' : ''} ${err ? 'invalid' : ''} ${off ? 'off' : ''}">
       ${f && f.preview ? `<img src="${f.preview}" alt="">` : ''}
-      <span class="t ${off ? '' : 'req'}">${t(d.k)}</span>
+      <span class="t ${off || opt ? '' : 'req'}">${opt && !off ? t('payslipOpt') : t(d.k)}</span>
       <span class="s">${off ? t('payslipOff') : err ? `<span style="color:var(--err)">${t(err)}</span>` : f ? (f.mime === 'application/pdf' ? esc(f.name) + ' · ' : '') + t('uploaded') : t('tapUpload')}</span>
       ${off ? '' : `<input type="file" accept="${d.accept}" data-file="${d.k}">`}
     </label>`;
@@ -375,7 +395,8 @@ function stepReview(){
   const job = (S.jobs || []).find(j => j.id === S.data.jobId) || {};
   const jobName = job[S.lang] || job.en || job.zh || '';
   const optText = (k, v) => Array.isArray(v) ? v.map(t).join(', ') : ['gender','transport','source'].includes(k) && v ? t(v) : v;
-  const rows = [['position', jobName], ...['name','ic','phone','email','gender','area','languages','transport','expectedSalary','startDate'].map(k => [k, optText(k, S.data[k])])];
+  const fw = (S.data.freelanceTasks || []).map(k => k === 'fw_other' ? t(k) + '：' + (S.data.freelanceOther || '') : t(k)).join(', ');
+  const rows = [['position', jobName], ['fwLabel', isFreelance() ? fw : ''], ...['name','ic','phone','email','gender','area','languages','transport','expectedSalary','startDate'].map(k => [k, optText(k, S.data[k])])];
   if (!S.data.noPrevJob) rows.push(['prevCompany', S.data.prevCompany], ['prevPosition', S.data.prevPosition]);
   rows.push(['files', T.filesCount[S.lang](Object.keys(S.files).length)]);
   return `<dl class="review">` + rows.filter(r => r[1]).map(([k, v]) => `<dt>${t(k).replace(/（.*?）|\(.*?\)/g, '')}</dt><dd>${esc(v)}</dd>`).join('') + `</dl>
@@ -394,6 +415,7 @@ function bind(){
     if (el.id === 'noPrevJob') { el.onchange = () => { S.data.noPrevJob = el.checked; S.errors = {}; render(); }; return; }
     if (el.id === 'consent') { el.onchange = () => { S.consent = el.checked; delete S.errors.consent; }; return; }
     const h = () => {
+      if (el.name === 'freelanceTasks') { S.data.freelanceTasks = [...document.querySelectorAll('input[name="freelanceTasks"]:checked')].map(x => x.value); delete S.errors.freelanceTasks; render(); return; }
       if (el.type === 'checkbox') S.data[el.name] = [...document.querySelectorAll(`input[name="${el.name}"]:checked`)].map(x => x.value);
       else if (el.type === 'radio') { if (el.checked) S.data[el.name] = el.value; }
       else S.data[el.name] = el.value;
@@ -442,6 +464,11 @@ function validate(){
   const e = {};
   const d = S.data;
   if (S.step === 0 && !d.jobId) e.jobId = 'pickJob';
+  if (S.step === 0 && isFreelance()) {
+    const ft = d.freelanceTasks || [];
+    if (!ft.length) e.freelanceTasks = 'needFw';
+    else if (ft.includes('fw_other') && !String(d.freelanceOther || '').trim()) e.freelanceOther = 'required';
+  }
   if (S.step === 1 || S.step === 2) {
     FIELDS[S.step].forEach(f => {
       if (S.step === 2 && d.noPrevJob && (f.req === 'job' || f.jobOnly)) return;
@@ -457,7 +484,7 @@ function validate(){
   }
   if (S.step === 3 && !S.files.selfie) e.selfie = 'needSelfie';
   if (S.step === 4) DOCS.forEach(x => {
-    if (x.k === 'payslip' && d.noPrevJob) return;
+    if (x.k === 'payslip' && (d.noPrevJob || isFreelance())) return;
     if (!S.files[x.k]) e[x.k] = 'needFile';
   });
   if (S.step === 5 && !S.consent) e.consent = 'needConsent';
@@ -493,6 +520,7 @@ async function submit(){
     noPrevJob: d.noPrevJob ? '是' : '',
     prevCompany: d.noPrevJob ? '' : (d.prevCompany || ''), prevPosition: d.noPrevJob ? '' : (d.prevPosition || ''),
     prevDuration: d.noPrevJob ? '' : (d.prevDuration || ''), leaveReason: d.noPrevJob ? '' : (d.leaveReason || ''),
+    freelanceWork: isFreelance() ? (d.freelanceTasks || []).map(k => k === 'fw_other' ? '其他：' + (d.freelanceOther || '').trim() : zh(k)).join(', ') : '',
     experience: d.experience || '', lang: S.lang.toUpperCase(), website: d.website || (hp ? hp.value : '')
   };
   const files = {};
