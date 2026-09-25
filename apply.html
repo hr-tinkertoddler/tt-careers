@@ -9,8 +9,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --ink:#22314F; --paper:#FFFFFF; --sky:#DCEEFA; --sun:#FFCF5A; --leaf:#2F8F62;
-  --line:#D5DEE8; --muted:#5C6B84; --err:#C2413A; --soft:#F5F9FC;
+  --ink:#1E3B2C; --paper:#FFFFFF; --sky:#E4F3E2; --sun:#9ED67A; --leaf:#2F8F4E;
+  --line:#D3E2D5; --muted:#5A6E60; --err:#C2413A; --soft:#F4F9F3;
   --cjk:"PingFang TC","Noto Sans TC","Microsoft JhengHei","Heiti TC",sans-serif;
   --display:"Baloo 2",var(--cjk);
   --body:"Nunito Sans",var(--cjk);
@@ -109,7 +109,7 @@ dl.review dd{margin:0;font-weight:600;word-break:break-word}
 .btn:disabled{opacity:.5;cursor:default}
 .btn:focus-visible,.job:focus-visible,.lang button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
 
-.overlay{position:fixed;inset:0;background:rgba(34,49,79,.55);display:none;place-items:center;z-index:9;padding:20px}
+.overlay{position:fixed;inset:0;background:rgba(30,59,44,.55);display:none;place-items:center;z-index:9;padding:20px}
 .overlay.on{display:grid}
 .overlay .box{background:var(--paper);border-radius:18px;padding:26px;text-align:center;max-width:320px;font-weight:700}
 .spin{width:38px;height:38px;border:4px solid var(--sky);border-top-color:var(--ink);border-radius:50%;margin:0 auto 14px;animation:sp 1s linear infinite}
@@ -173,7 +173,7 @@ const T = {
   ic:{zh:'IC 號碼',en:'IC number',ms:'Nombor IC'},
   icHint:{zh:'例如 990101-10-1234',en:'e.g. 990101-10-1234',ms:'cth. 990101-10-1234'},
   phone:{zh:'手機號碼（WhatsApp）',en:'Mobile number (WhatsApp)',ms:'Nombor telefon (WhatsApp)'},
-  email:{zh:'電郵（可選）',en:'Email (optional)',ms:'E-mel (pilihan)'},
+  email:{zh:'電郵',en:'Email',ms:'E-mel'},
   gender:{zh:'性別',en:'Gender',ms:'Jantina'},
   male:{zh:'男',en:'Male',ms:'Lelaki'}, female:{zh:'女',en:'Female',ms:'Perempuan'},
   area:{zh:'居住地區',en:'Area you live in',ms:'Kawasan tempat tinggal'},
@@ -197,7 +197,7 @@ const T = {
   prevPosition:{zh:'職位',en:'Position',ms:'Jawatan'},
   prevDuration:{zh:'工作期間',en:'Period worked',ms:'Tempoh bekerja'},
   prevDurationHint:{zh:'例如 2023年3月 至 2025年6月',en:'e.g. Mar 2023 to Jun 2025',ms:'cth. Mac 2023 hingga Jun 2025'},
-  leaveReason:{zh:'離職原因（可選）',en:'Reason for leaving (optional)',ms:'Sebab berhenti (pilihan)'},
+  leaveReason:{zh:'離職原因',en:'Reason for leaving',ms:'Sebab berhenti'},
   experience:{zh:'零售、銷售或照顧小孩的經驗（可選）',en:'Retail, sales or childcare experience (optional)',ms:'Pengalaman runcit, jualan atau penjagaan kanak-kanak (pilihan)'},
 
   selfieHelp:{zh:'請拍一張清楚的正面照，不要戴口罩或墨鏡。',en:'Take a clear photo of your face. No mask or sunglasses.',ms:'Ambil gambar wajah yang jelas. Tanpa pelitup muka atau cermin mata hitam.'},
@@ -239,14 +239,14 @@ const T = {
 };
 
 const FOOT = '<svg viewBox="0 0 24 36"><path d="M12 1.5c5.2 0 8.4 5 8.4 11.8 0 4.7-1.8 7.6-1.8 11.3 0 5.4-2.8 9.9-6.8 9.9s-6.4-3.6-6.4-8c0-3.8 1.1-6.6.3-10.7C4.6 8.6 6.8 1.5 12 1.5z"/></svg>';
-const PERSON = '<svg viewBox="0 0 24 24" fill="#22314F"><circle cx="12" cy="8" r="4.5"/><path d="M3 22c0-5 4-8 9-8s9 3 9 8z"/></svg>';
+const PERSON = '<svg viewBox="0 0 24 24" fill="#1E3B2C"><circle cx="12" cy="8" r="4.5"/><path d="M3 22c0-5 4-8 9-8s9 3 9 8z"/></svg>';
 
 const FIELDS = {
   1: [
     {k:'name',req:1,ac:'name'},
     {k:'ic',req:1,inputmode:'numeric',hint:'icHint',check:'ic'},
     {k:'phone',type:'tel',req:1,ac:'tel',check:'phone'},
-    {k:'email',type:'email',ac:'email',check:'email'},
+    {k:'email',type:'email',req:1,ac:'email',check:'email'},
     {k:'gender',type:'radio',opts:['male','female'],req:1},
     {k:'area',req:1,hint:'areaHint'},
     {k:'address',type:'textarea',ac:'street-address'},
@@ -260,8 +260,7 @@ const FIELDS = {
     {k:'prevCompany',req:'job'},
     {k:'prevPosition',req:'job'},
     {k:'prevDuration',req:'job',hint:'prevDurationHint'},
-    {k:'leaveReason',type:'textarea',jobOnly:1},
-    {k:'experience',type:'textarea'}
+    {k:'leaveReason',type:'textarea',req:'job'}
   ]
 };
 const DOCS = [
